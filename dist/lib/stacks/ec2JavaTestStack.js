@@ -1,0 +1,44 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Ec2JavaTestStack = void 0;
+const pipelines_1 = require("@amzn/pipelines");
+const aws_s3_1 = require("aws-cdk-lib/aws-s3");
+const aws_ec2_1 = require("aws-cdk-lib/aws-ec2");
+const aws_iam_1 = require("aws-cdk-lib/aws-iam");
+// This stack allocates the necessary resources for running the E2E EC2 Canary in
+// https://github.com/aws-observability/aws-application-signals-test-framework/actions/workflows/appsignals-e2e-ec2-canary-test.yml
+class Ec2JavaTestStack extends pipelines_1.DeploymentStack {
+    constructor(parent, name, props) {
+        super(parent, name, {
+            ...props,
+            softwareType: pipelines_1.SoftwareType.INFRASTRUCTURE,
+        });
+        const { stage, env } = props;
+        // Create a new role that will be assumed by the ec2 instances created for the E2E tests
+        // This includes the K8s-on-EC2 and EC2 tests
+        const role = new aws_iam_1.Role(this, 'APP_SIGNALS_EC2_TEST_ROLE', {
+            assumedBy: new aws_iam_1.ServicePrincipal('ec2.amazonaws.com'),
+            managedPolicies: [
+                aws_iam_1.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'),
+                aws_iam_1.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMFullAccess'),
+                aws_iam_1.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSAppRunnerServicePolicyForECRAccess'),
+                aws_iam_1.ManagedPolicy.fromAwsManagedPolicyName('AWSXrayWriteOnlyAccess'),
+                aws_iam_1.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'),
+            ],
+            roleName: 'APP_SIGNALS_EC2_TEST_ROLE',
+        });
+        // Create an instnace profile for the role. The instance profile will be created regardless, but calling it here
+        // allows us to define the instanceProfileName which is used in the ec2 terraform code.
+        new aws_iam_1.InstanceProfile(this, 'EC2TestRoleInstanceProfile', {
+            role: role,
+            instanceProfileName: 'APP_SIGNALS_EC2_TEST_ROLE',
+        });
+        // Find the default VPC which a new security group will be added to.
+        const defaultVpc = aws_ec2_1.Vpc.fromLookup(this, 'DefaultVpc', { isDefault: true });
+        aws_ec2_1.SecurityGroup.fromLookupByName(this, 'defaultSecurityGroup', 'default', defaultVpc).addIngressRule(aws_ec2_1.Peer.anyIpv4(), aws_ec2_1.Port.allTraffic(), 'Test');
+        // Create a S3 Bucket which will store the sample app main and remote service .jar files
+        new aws_s3_1.Bucket(this, `Bucket`, { bucketName: `aws-appsignals-sample-app-${stage}-${env.region}` });
+    }
+}
+exports.Ec2JavaTestStack = Ec2JavaTestStack;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZWMySmF2YVRlc3RTdGFjay5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9zdGFja3MvZWMySmF2YVRlc3RTdGFjay50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFBQSwrQ0FBZ0U7QUFFaEUsK0NBQTRDO0FBQzVDLGlEQUFxRTtBQUNyRSxpREFBNkY7QUFHN0YsaUZBQWlGO0FBQ2pGLG1JQUFtSTtBQUNuSSxNQUFhLGdCQUFpQixTQUFRLDJCQUFlO0lBQ2pELFlBQVksTUFBVyxFQUFFLElBQVksRUFBRSxLQUFpQjtRQUNwRCxLQUFLLENBQUMsTUFBTSxFQUFFLElBQUksRUFBRTtZQUNoQixHQUFHLEtBQUs7WUFDUixZQUFZLEVBQUUsd0JBQVksQ0FBQyxjQUFjO1NBQzVDLENBQUMsQ0FBQztRQUVILE1BQU0sRUFBRSxLQUFLLEVBQUUsR0FBRyxFQUFFLEdBQUcsS0FBSyxDQUFDO1FBRTdCLHdGQUF3RjtRQUN4Riw2Q0FBNkM7UUFDN0MsTUFBTSxJQUFJLEdBQUcsSUFBSSxjQUFJLENBQUMsSUFBSSxFQUFFLDJCQUEyQixFQUFFO1lBQ3JELFNBQVMsRUFBRSxJQUFJLDBCQUFnQixDQUFDLG1CQUFtQixDQUFDO1lBQ3BELGVBQWUsRUFBRTtnQkFDYix1QkFBYSxDQUFDLHdCQUF3QixDQUFDLG9CQUFvQixDQUFDO2dCQUM1RCx1QkFBYSxDQUFDLHdCQUF3QixDQUFDLHFCQUFxQixDQUFDO2dCQUM3RCx1QkFBYSxDQUFDLHdCQUF3QixDQUFDLG9EQUFvRCxDQUFDO2dCQUM1Rix1QkFBYSxDQUFDLHdCQUF3QixDQUFDLHdCQUF3QixDQUFDO2dCQUNoRSx1QkFBYSxDQUFDLHdCQUF3QixDQUFDLDZCQUE2QixDQUFDO2FBQ3hFO1lBQ0QsUUFBUSxFQUFFLDJCQUEyQjtTQUN4QyxDQUFDLENBQUM7UUFFSCxnSEFBZ0g7UUFDaEgsdUZBQXVGO1FBQ3ZGLElBQUkseUJBQWUsQ0FBQyxJQUFJLEVBQUUsNEJBQTRCLEVBQUU7WUFDcEQsSUFBSSxFQUFFLElBQUk7WUFDVixtQkFBbUIsRUFBRSwyQkFBMkI7U0FDbkQsQ0FBQyxDQUFDO1FBRUgsb0VBQW9FO1FBQ3BFLE1BQU0sVUFBVSxHQUFHLGFBQUcsQ0FBQyxVQUFVLENBQUMsSUFBSSxFQUFFLFlBQVksRUFBRSxFQUFFLFNBQVMsRUFBRSxJQUFJLEVBQUUsQ0FBQyxDQUFDO1FBQzNFLHVCQUFhLENBQUMsZ0JBQWdCLENBQUMsSUFBSSxFQUFFLHNCQUFzQixFQUFFLFNBQVMsRUFBRSxVQUFVLENBQUMsQ0FBQyxjQUFjLENBQzlGLGNBQUksQ0FBQyxPQUFPLEVBQUUsRUFDZCxjQUFJLENBQUMsVUFBVSxFQUFFLEVBQ2pCLE1BQU0sQ0FDVCxDQUFDO1FBRUYsd0ZBQXdGO1FBQ3hGLElBQUksZUFBTSxDQUFDLElBQUksRUFBRSxRQUFRLEVBQUUsRUFBRSxVQUFVLEVBQUUsNkJBQTZCLEtBQUssSUFBSSxHQUFHLENBQUMsTUFBTSxFQUFFLEVBQUUsQ0FBQyxDQUFDO0lBQ25HLENBQUM7Q0FDSjtBQXpDRCw0Q0F5Q0MiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBEZXBsb3ltZW50U3RhY2ssIFNvZnR3YXJlVHlwZSB9IGZyb20gJ0BhbXpuL3BpcGVsaW5lcyc7XG5pbXBvcnQgeyBBcHAgfSBmcm9tICdhd3MtY2RrLWxpYic7XG5pbXBvcnQgeyBCdWNrZXQgfSBmcm9tICdhd3MtY2RrLWxpYi9hd3MtczMnO1xuaW1wb3J0IHsgVnBjLCBTZWN1cml0eUdyb3VwLCBQZWVyLCBQb3J0IH0gZnJvbSAnYXdzLWNkay1saWIvYXdzLWVjMic7XG5pbXBvcnQgeyBSb2xlLCBTZXJ2aWNlUHJpbmNpcGFsLCBNYW5hZ2VkUG9saWN5LCBJbnN0YW5jZVByb2ZpbGUgfSBmcm9tICdhd3MtY2RrLWxpYi9hd3MtaWFtJztcbmltcG9ydCB7IFN0YWNrUHJvcHMgfSBmcm9tICcuLi91dGlscy9jb21tb24nO1xuXG4vLyBUaGlzIHN0YWNrIGFsbG9jYXRlcyB0aGUgbmVjZXNzYXJ5IHJlc291cmNlcyBmb3IgcnVubmluZyB0aGUgRTJFIEVDMiBDYW5hcnkgaW5cbi8vIGh0dHBzOi8vZ2l0aHViLmNvbS9hd3Mtb2JzZXJ2YWJpbGl0eS9hd3MtYXBwbGljYXRpb24tc2lnbmFscy10ZXN0LWZyYW1ld29yay9hY3Rpb25zL3dvcmtmbG93cy9hcHBzaWduYWxzLWUyZS1lYzItY2FuYXJ5LXRlc3QueW1sXG5leHBvcnQgY2xhc3MgRWMySmF2YVRlc3RTdGFjayBleHRlbmRzIERlcGxveW1lbnRTdGFjayB7XG4gICAgY29uc3RydWN0b3IocGFyZW50OiBBcHAsIG5hbWU6IHN0cmluZywgcHJvcHM6IFN0YWNrUHJvcHMpIHtcbiAgICAgICAgc3VwZXIocGFyZW50LCBuYW1lLCB7XG4gICAgICAgICAgICAuLi5wcm9wcyxcbiAgICAgICAgICAgIHNvZnR3YXJlVHlwZTogU29mdHdhcmVUeXBlLklORlJBU1RSVUNUVVJFLFxuICAgICAgICB9KTtcblxuICAgICAgICBjb25zdCB7IHN0YWdlLCBlbnYgfSA9IHByb3BzO1xuXG4gICAgICAgIC8vIENyZWF0ZSBhIG5ldyByb2xlIHRoYXQgd2lsbCBiZSBhc3N1bWVkIGJ5IHRoZSBlYzIgaW5zdGFuY2VzIGNyZWF0ZWQgZm9yIHRoZSBFMkUgdGVzdHNcbiAgICAgICAgLy8gVGhpcyBpbmNsdWRlcyB0aGUgSzhzLW9uLUVDMiBhbmQgRUMyIHRlc3RzXG4gICAgICAgIGNvbnN0IHJvbGUgPSBuZXcgUm9sZSh0aGlzLCAnQVBQX1NJR05BTFNfRUMyX1RFU1RfUk9MRScsIHtcbiAgICAgICAgICAgIGFzc3VtZWRCeTogbmV3IFNlcnZpY2VQcmluY2lwYWwoJ2VjMi5hbWF6b25hd3MuY29tJyksXG4gICAgICAgICAgICBtYW5hZ2VkUG9saWNpZXM6IFtcbiAgICAgICAgICAgICAgICBNYW5hZ2VkUG9saWN5LmZyb21Bd3NNYW5hZ2VkUG9saWN5TmFtZSgnQW1hem9uUzNGdWxsQWNjZXNzJyksXG4gICAgICAgICAgICAgICAgTWFuYWdlZFBvbGljeS5mcm9tQXdzTWFuYWdlZFBvbGljeU5hbWUoJ0FtYXpvblNTTUZ1bGxBY2Nlc3MnKSxcbiAgICAgICAgICAgICAgICBNYW5hZ2VkUG9saWN5LmZyb21Bd3NNYW5hZ2VkUG9saWN5TmFtZSgnc2VydmljZS1yb2xlL0FXU0FwcFJ1bm5lclNlcnZpY2VQb2xpY3lGb3JFQ1JBY2Nlc3MnKSxcbiAgICAgICAgICAgICAgICBNYW5hZ2VkUG9saWN5LmZyb21Bd3NNYW5hZ2VkUG9saWN5TmFtZSgnQVdTWHJheVdyaXRlT25seUFjY2VzcycpLFxuICAgICAgICAgICAgICAgIE1hbmFnZWRQb2xpY3kuZnJvbUF3c01hbmFnZWRQb2xpY3lOYW1lKCdDbG91ZFdhdGNoQWdlbnRTZXJ2ZXJQb2xpY3knKSxcbiAgICAgICAgICAgIF0sXG4gICAgICAgICAgICByb2xlTmFtZTogJ0FQUF9TSUdOQUxTX0VDMl9URVNUX1JPTEUnLFxuICAgICAgICB9KTtcblxuICAgICAgICAvLyBDcmVhdGUgYW4gaW5zdG5hY2UgcHJvZmlsZSBmb3IgdGhlIHJvbGUuIFRoZSBpbnN0YW5jZSBwcm9maWxlIHdpbGwgYmUgY3JlYXRlZCByZWdhcmRsZXNzLCBidXQgY2FsbGluZyBpdCBoZXJlXG4gICAgICAgIC8vIGFsbG93cyB1cyB0byBkZWZpbmUgdGhlIGluc3RhbmNlUHJvZmlsZU5hbWUgd2hpY2ggaXMgdXNlZCBpbiB0aGUgZWMyIHRlcnJhZm9ybSBjb2RlLlxuICAgICAgICBuZXcgSW5zdGFuY2VQcm9maWxlKHRoaXMsICdFQzJUZXN0Um9sZUluc3RhbmNlUHJvZmlsZScsIHtcbiAgICAgICAgICAgIHJvbGU6IHJvbGUsXG4gICAgICAgICAgICBpbnN0YW5jZVByb2ZpbGVOYW1lOiAnQVBQX1NJR05BTFNfRUMyX1RFU1RfUk9MRScsXG4gICAgICAgIH0pO1xuXG4gICAgICAgIC8vIEZpbmQgdGhlIGRlZmF1bHQgVlBDIHdoaWNoIGEgbmV3IHNlY3VyaXR5IGdyb3VwIHdpbGwgYmUgYWRkZWQgdG8uXG4gICAgICAgIGNvbnN0IGRlZmF1bHRWcGMgPSBWcGMuZnJvbUxvb2t1cCh0aGlzLCAnRGVmYXVsdFZwYycsIHsgaXNEZWZhdWx0OiB0cnVlIH0pO1xuICAgICAgICBTZWN1cml0eUdyb3VwLmZyb21Mb29rdXBCeU5hbWUodGhpcywgJ2RlZmF1bHRTZWN1cml0eUdyb3VwJywgJ2RlZmF1bHQnLCBkZWZhdWx0VnBjKS5hZGRJbmdyZXNzUnVsZShcbiAgICAgICAgICAgIFBlZXIuYW55SXB2NCgpLFxuICAgICAgICAgICAgUG9ydC5hbGxUcmFmZmljKCksXG4gICAgICAgICAgICAnVGVzdCcsXG4gICAgICAgICk7XG5cbiAgICAgICAgLy8gQ3JlYXRlIGEgUzMgQnVja2V0IHdoaWNoIHdpbGwgc3RvcmUgdGhlIHNhbXBsZSBhcHAgbWFpbiBhbmQgcmVtb3RlIHNlcnZpY2UgLmphciBmaWxlc1xuICAgICAgICBuZXcgQnVja2V0KHRoaXMsIGBCdWNrZXRgLCB7IGJ1Y2tldE5hbWU6IGBhd3MtYXBwc2lnbmFscy1zYW1wbGUtYXBwLSR7c3RhZ2V9LSR7ZW52LnJlZ2lvbn1gIH0pO1xuICAgIH1cbn1cbiJdfQ==

@@ -1,0 +1,24 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GithubRunnerImagesStack = void 0;
+const pipelines_1 = require("@amzn/pipelines");
+const aws_cdk_lib_1 = require("aws-cdk-lib");
+const config_1 = require("../utils/config");
+// Canaries run the E2E tests in a docker container with required dependencies already installed. Each canary is allocated its own ECR to retrieve the
+// docker image from. This stack is responsible for creating the ECRs in each canary.
+// https://github.com/aws-observability/aws-application-signals-test-framework/actions/workflows
+class GithubRunnerImagesStack extends pipelines_1.DeploymentStack {
+    constructor(parent, name, props) {
+        super(parent, name, {
+            ...props,
+            softwareType: pipelines_1.SoftwareType.INFRASTRUCTURE,
+        });
+        config_1.e2eCanaryList.forEach((canary) => {
+            new aws_cdk_lib_1.aws_ecr.CfnPublicRepository(this, `github-runner-ecr-${canary}`, {
+                repositoryName: `${canary}`,
+            });
+        });
+    }
+}
+exports.GithubRunnerImagesStack = GithubRunnerImagesStack;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2l0aHViUnVubmVySW1hZ2VzU3RhY2suanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9saWIvc3RhY2tzL2dpdGh1YlJ1bm5lckltYWdlc1N0YWNrLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUFBLCtDQUFnRTtBQUVoRSw2Q0FBNkM7QUFFN0MsNENBQWdEO0FBRWhELHNKQUFzSjtBQUN0SixxRkFBcUY7QUFDckYsZ0dBQWdHO0FBQ2hHLE1BQWEsdUJBQXdCLFNBQVEsMkJBQWU7SUFDeEQsWUFBWSxNQUFXLEVBQUUsSUFBWSxFQUFFLEtBQWlCO1FBQ3BELEtBQUssQ0FBQyxNQUFNLEVBQUUsSUFBSSxFQUFFO1lBQ2hCLEdBQUcsS0FBSztZQUNSLFlBQVksRUFBRSx3QkFBWSxDQUFDLGNBQWM7U0FDNUMsQ0FBQyxDQUFDO1FBRUgsc0JBQWEsQ0FBQyxPQUFPLENBQUMsQ0FBQyxNQUFNLEVBQUUsRUFBRTtZQUM3QixJQUFJLHFCQUFHLENBQUMsbUJBQW1CLENBQUMsSUFBSSxFQUFFLHFCQUFxQixNQUFNLEVBQUUsRUFBRTtnQkFDN0QsY0FBYyxFQUFFLEdBQUcsTUFBTSxFQUFFO2FBQzlCLENBQUMsQ0FBQztRQUNQLENBQUMsQ0FBQyxDQUFDO0lBQ1AsQ0FBQztDQUNKO0FBYkQsMERBYUMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBEZXBsb3ltZW50U3RhY2ssIFNvZnR3YXJlVHlwZSB9IGZyb20gJ0BhbXpuL3BpcGVsaW5lcyc7XG5pbXBvcnQgeyBBcHAgfSBmcm9tICdhd3MtY2RrLWxpYic7XG5pbXBvcnQgeyBhd3NfZWNyIGFzIGVjciB9IGZyb20gJ2F3cy1jZGstbGliJztcbmltcG9ydCB7IFN0YWNrUHJvcHMgfSBmcm9tICcuLi91dGlscy9jb21tb24nO1xuaW1wb3J0IHsgZTJlQ2FuYXJ5TGlzdCB9IGZyb20gJy4uL3V0aWxzL2NvbmZpZyc7XG5cbi8vIENhbmFyaWVzIHJ1biB0aGUgRTJFIHRlc3RzIGluIGEgZG9ja2VyIGNvbnRhaW5lciB3aXRoIHJlcXVpcmVkIGRlcGVuZGVuY2llcyBhbHJlYWR5IGluc3RhbGxlZC4gRWFjaCBjYW5hcnkgaXMgYWxsb2NhdGVkIGl0cyBvd24gRUNSIHRvIHJldHJpZXZlIHRoZVxuLy8gZG9ja2VyIGltYWdlIGZyb20uIFRoaXMgc3RhY2sgaXMgcmVzcG9uc2libGUgZm9yIGNyZWF0aW5nIHRoZSBFQ1JzIGluIGVhY2ggY2FuYXJ5LlxuLy8gaHR0cHM6Ly9naXRodWIuY29tL2F3cy1vYnNlcnZhYmlsaXR5L2F3cy1hcHBsaWNhdGlvbi1zaWduYWxzLXRlc3QtZnJhbWV3b3JrL2FjdGlvbnMvd29ya2Zsb3dzXG5leHBvcnQgY2xhc3MgR2l0aHViUnVubmVySW1hZ2VzU3RhY2sgZXh0ZW5kcyBEZXBsb3ltZW50U3RhY2sge1xuICAgIGNvbnN0cnVjdG9yKHBhcmVudDogQXBwLCBuYW1lOiBzdHJpbmcsIHByb3BzOiBTdGFja1Byb3BzKSB7XG4gICAgICAgIHN1cGVyKHBhcmVudCwgbmFtZSwge1xuICAgICAgICAgICAgLi4ucHJvcHMsXG4gICAgICAgICAgICBzb2Z0d2FyZVR5cGU6IFNvZnR3YXJlVHlwZS5JTkZSQVNUUlVDVFVSRSxcbiAgICAgICAgfSk7XG5cbiAgICAgICAgZTJlQ2FuYXJ5TGlzdC5mb3JFYWNoKChjYW5hcnkpID0+IHtcbiAgICAgICAgICAgIG5ldyBlY3IuQ2ZuUHVibGljUmVwb3NpdG9yeSh0aGlzLCBgZ2l0aHViLXJ1bm5lci1lY3ItJHtjYW5hcnl9YCwge1xuICAgICAgICAgICAgICAgIHJlcG9zaXRvcnlOYW1lOiBgJHtjYW5hcnl9YCxcbiAgICAgICAgICAgIH0pO1xuICAgICAgICB9KTtcbiAgICB9XG59XG4iXX0=

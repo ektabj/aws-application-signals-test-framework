@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GitHubOIDCProvider = void 0;
+const aws_iam_1 = require("aws-cdk-lib/aws-iam");
+const constructs_1 = require("constructs");
+/**
+ * Creates a new OpenID Provider using the github actions domain.
+ */
+class GitHubOIDCProvider extends constructs_1.Construct {
+    constructor(scope, id) {
+        super(scope, id);
+        this.domainName = 'token.actions.githubusercontent.com';
+        this.githubProvider = new aws_iam_1.OpenIdConnectProvider(this, 'oidcProvider', {
+            url: `https://${this.domainName}`,
+            clientIds: ['sts.amazonaws.com'],
+            // ref: https://github.blog/changelog/2023-06-27-github-actions-update-on-oidc-integration-with-aws/
+            thumbprints: ['6938fd4d98bab03faadb97b34396831e3780aea1', '1c58a3a8518e8759bf075b76b750d4f2df264fcd'],
+        });
+    }
+}
+exports.GitHubOIDCProvider = GitHubOIDCProvider;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib2lkYy1wcm92aWRlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9jb25zdHJ1Y3RzL29pZGMtcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O0FBQUEsaURBQW9GO0FBQ3BGLDJDQUF1QztBQUV2Qzs7R0FFRztBQUNILE1BQWEsa0JBQW1CLFNBQVEsc0JBQVM7SUFHN0MsWUFBWSxLQUFnQixFQUFFLEVBQVU7UUFDcEMsS0FBSyxDQUFDLEtBQUssRUFBRSxFQUFFLENBQUMsQ0FBQztRQUZaLGVBQVUsR0FBVyxxQ0FBcUMsQ0FBQztRQUdoRSxJQUFJLENBQUMsY0FBYyxHQUFHLElBQUksK0JBQXFCLENBQUMsSUFBSSxFQUFFLGNBQWMsRUFBRTtZQUNsRSxHQUFHLEVBQUUsV0FBVyxJQUFJLENBQUMsVUFBVSxFQUFFO1lBQ2pDLFNBQVMsRUFBRSxDQUFDLG1CQUFtQixDQUFDO1lBQ2hDLG9HQUFvRztZQUNwRyxXQUFXLEVBQUUsQ0FBQywwQ0FBMEMsRUFBRSwwQ0FBMEMsQ0FBQztTQUN4RyxDQUFDLENBQUM7SUFDUCxDQUFDO0NBQ0o7QUFaRCxnREFZQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IElPcGVuSWRDb25uZWN0UHJvdmlkZXIsIE9wZW5JZENvbm5lY3RQcm92aWRlciB9IGZyb20gJ2F3cy1jZGstbGliL2F3cy1pYW0nO1xuaW1wb3J0IHsgQ29uc3RydWN0IH0gZnJvbSAnY29uc3RydWN0cyc7XG5cbi8qKlxuICogQ3JlYXRlcyBhIG5ldyBPcGVuSUQgUHJvdmlkZXIgdXNpbmcgdGhlIGdpdGh1YiBhY3Rpb25zIGRvbWFpbi5cbiAqL1xuZXhwb3J0IGNsYXNzIEdpdEh1Yk9JRENQcm92aWRlciBleHRlbmRzIENvbnN0cnVjdCB7XG4gICAgcmVhZG9ubHkgZ2l0aHViUHJvdmlkZXI6IElPcGVuSWRDb25uZWN0UHJvdmlkZXI7XG4gICAgcmVhZG9ubHkgZG9tYWluTmFtZTogc3RyaW5nID0gJ3Rva2VuLmFjdGlvbnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJztcbiAgICBjb25zdHJ1Y3RvcihzY29wZTogQ29uc3RydWN0LCBpZDogc3RyaW5nKSB7XG4gICAgICAgIHN1cGVyKHNjb3BlLCBpZCk7XG4gICAgICAgIHRoaXMuZ2l0aHViUHJvdmlkZXIgPSBuZXcgT3BlbklkQ29ubmVjdFByb3ZpZGVyKHRoaXMsICdvaWRjUHJvdmlkZXInLCB7XG4gICAgICAgICAgICB1cmw6IGBodHRwczovLyR7dGhpcy5kb21haW5OYW1lfWAsXG4gICAgICAgICAgICBjbGllbnRJZHM6IFsnc3RzLmFtYXpvbmF3cy5jb20nXSxcbiAgICAgICAgICAgIC8vIHJlZjogaHR0cHM6Ly9naXRodWIuYmxvZy9jaGFuZ2Vsb2cvMjAyMy0wNi0yNy1naXRodWItYWN0aW9ucy11cGRhdGUtb24tb2lkYy1pbnRlZ3JhdGlvbi13aXRoLWF3cy9cbiAgICAgICAgICAgIHRodW1icHJpbnRzOiBbJzY5MzhmZDRkOThiYWIwM2ZhYWRiOTdiMzQzOTY4MzFlMzc4MGFlYTEnLCAnMWM1OGEzYTg1MThlODc1OWJmMDc1Yjc2Yjc1MGQ0ZjJkZjI2NGZjZCddLFxuICAgICAgICB9KTtcbiAgICB9XG59XG4iXX0=

@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const aws_cdk_lib_1 = require("aws-cdk-lib");
+const pipeline_1 = require("./deploy/pipeline");
+const config_1 = require("./utils/config");
+const pipelines_1 = require("@amzn/pipelines");
+const appStacks_1 = require("./deploy/appStacks");
+const constants_1 = require("./utils/constants");
+// Set up your CDK App
+const app = new aws_cdk_lib_1.App();
+if (process.env.PERSONAL_AWS_ACCOUNT) {
+    const personalBootstrap = pipelines_1.BootstrapStack.personalBootstrap(app, {
+        account: process.env.PERSONAL_AWS_ACCOUNT,
+        region: 'us-east-1',
+        disambiguator: `${process.env.USER}-dev`,
+    });
+    (0, appStacks_1.addAppStacks)(app, {
+        env: personalBootstrap.deploymentEnvironment,
+        stage: constants_1.Stage.Dev,
+    });
+}
+else {
+    new pipeline_1.APMPulseEnablementTestInfraPipeline(app, config_1.APMPulseEnablementTestInfraPipelineProps);
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYXBwLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vbGliL2FwcC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFDQSw2Q0FBa0M7QUFDbEMsZ0RBQXdFO0FBQ3hFLDJDQUEwRTtBQUMxRSwrQ0FBaUQ7QUFDakQsa0RBQWtEO0FBQ2xELGlEQUEwQztBQUUxQyxzQkFBc0I7QUFDdEIsTUFBTSxHQUFHLEdBQUcsSUFBSSxpQkFBRyxFQUFFLENBQUM7QUFFdEIsSUFBSSxPQUFPLENBQUMsR0FBRyxDQUFDLG9CQUFvQixFQUFFO0lBQ2xDLE1BQU0saUJBQWlCLEdBQUcsMEJBQWMsQ0FBQyxpQkFBaUIsQ0FBQyxHQUFHLEVBQUU7UUFDNUQsT0FBTyxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsb0JBQW9CO1FBQ3pDLE1BQU0sRUFBRSxXQUFXO1FBQ25CLGFBQWEsRUFBRSxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsSUFBSSxNQUFNO0tBQzNDLENBQUMsQ0FBQztJQUVILElBQUEsd0JBQVksRUFBQyxHQUFHLEVBQUU7UUFDZCxHQUFHLEVBQUUsaUJBQWlCLENBQUMscUJBQXFCO1FBQzVDLEtBQUssRUFBRSxpQkFBSyxDQUFDLEdBQUc7S0FDbkIsQ0FBQyxDQUFDO0NBQ047S0FBTTtJQUNILElBQUksOENBQW1DLENBQUMsR0FBRyxFQUFFLGlEQUF3QyxDQUFDLENBQUM7Q0FDMUYiLCJzb3VyY2VzQ29udGVudCI6WyIjIS91c3IvYmluL2VudiBub2RlXG5pbXBvcnQgeyBBcHAgfSBmcm9tICdhd3MtY2RrLWxpYic7XG5pbXBvcnQgeyBBUE1QdWxzZUVuYWJsZW1lbnRUZXN0SW5mcmFQaXBlbGluZSB9IGZyb20gJy4vZGVwbG95L3BpcGVsaW5lJztcbmltcG9ydCB7IEFQTVB1bHNlRW5hYmxlbWVudFRlc3RJbmZyYVBpcGVsaW5lUHJvcHMgfSBmcm9tICcuL3V0aWxzL2NvbmZpZyc7XG5pbXBvcnQgeyBCb290c3RyYXBTdGFjayB9IGZyb20gJ0BhbXpuL3BpcGVsaW5lcyc7XG5pbXBvcnQgeyBhZGRBcHBTdGFja3MgfSBmcm9tICcuL2RlcGxveS9hcHBTdGFja3MnO1xuaW1wb3J0IHsgU3RhZ2UgfSBmcm9tICcuL3V0aWxzL2NvbnN0YW50cyc7XG5cbi8vIFNldCB1cCB5b3VyIENESyBBcHBcbmNvbnN0IGFwcCA9IG5ldyBBcHAoKTtcblxuaWYgKHByb2Nlc3MuZW52LlBFUlNPTkFMX0FXU19BQ0NPVU5UKSB7XG4gICAgY29uc3QgcGVyc29uYWxCb290c3RyYXAgPSBCb290c3RyYXBTdGFjay5wZXJzb25hbEJvb3RzdHJhcChhcHAsIHtcbiAgICAgICAgYWNjb3VudDogcHJvY2Vzcy5lbnYuUEVSU09OQUxfQVdTX0FDQ09VTlQsXG4gICAgICAgIHJlZ2lvbjogJ3VzLWVhc3QtMScsXG4gICAgICAgIGRpc2FtYmlndWF0b3I6IGAke3Byb2Nlc3MuZW52LlVTRVJ9LWRldmAsXG4gICAgfSk7XG5cbiAgICBhZGRBcHBTdGFja3MoYXBwLCB7XG4gICAgICAgIGVudjogcGVyc29uYWxCb290c3RyYXAuZGVwbG95bWVudEVudmlyb25tZW50LFxuICAgICAgICBzdGFnZTogU3RhZ2UuRGV2LFxuICAgIH0pO1xufSBlbHNlIHtcbiAgICBuZXcgQVBNUHVsc2VFbmFibGVtZW50VGVzdEluZnJhUGlwZWxpbmUoYXBwLCBBUE1QdWxzZUVuYWJsZW1lbnRUZXN0SW5mcmFQaXBlbGluZVByb3BzKTtcbn1cbiJdfQ==
