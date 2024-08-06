@@ -44,8 +44,8 @@ env:
 jobs:
   python-k8s:
     runs-on: ubuntu-latest
-    container:
-      image: public.ecr.aws/h6o3z5z9/aws-application-signals-test-framework-workflow-container:latest
+    outputs:
+      validation-result: ${{ steps.validation-result.outputs.validation-result }}
     steps:
       - name: Generate testing id
         run: echo TESTING_ID="${{ env.E2E_TEST_AWS_REGION }}-${{ github.run_id }}-${{ github.run_number }}" >> $GITHUB_ENV
@@ -94,6 +94,14 @@ jobs:
           sed -i 's#\${IMAGE}#${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.E2E_TEST_AWS_REGION }}.amazonaws.com/${{ env.PYTHON_REMOTE_SAMPLE_APP_IMAGE }}#' python-remote-service-depl.yaml
           aws s3api put-object --bucket aws-appsignals-sample-app-prod-${{ env.E2E_TEST_AWS_REGION }} --key python-frontend-service-depl-${{ github.event.repository.name }}.yaml --body python-frontend-service-depl.yaml
           aws s3api put-object --bucket aws-appsignals-sample-app-prod-${{ env.E2E_TEST_AWS_REGION }} --key python-remote-service-depl-${{ github.event.repository.name }}.yaml --body python-remote-service-depl.yaml
+
+      - name: Set up terraform
+        uses: ./.github/workflows/actions/execute_and_retry
+        with:
+          command: "wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg"
+          post-command: 'echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+              && sudo apt update && sudo apt install terraform'
+          sleep_time: 60
 
       - name: Initiate Terraform
         uses: ./.github/workflows/actions/execute_and_retry
@@ -193,21 +201,20 @@ jobs:
           --query-string ip=${{ env.REMOTE_SERVICE_IP }}&testingId=${{ env.TESTING_ID }}
           --rollup'
 
-      - name: Publish metric on test result
+      - name: Refresh AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.E2E_TEST_ACCOUNT_ID }}:role/${{ env.E2E_TEST_ROLE_NAME }}
+          aws-region: us-east-1
+
+      - name: Save test results
         if: always()
+        id: validation-result
         run: |
           if [ "${{ steps.log-validation.outcome }}" = "success" ] && [ "${{ steps.metric-validation.outcome }}" = "success" ] && [ "${{ steps.trace-validation.outcome }}" = "success" ]; then
-            aws cloudwatch put-metric-data --namespace 'ADOT/GitHubActions' \
-            --metric-name Failure \
-            --dimensions repository=${{ github.repository }},branch=${{ github.ref_name }},workflow=${{ env.CALLER_WORKFLOW_NAME }} \
-            --value 0.0 \
-            --region ${{ env.E2E_TEST_AWS_REGION }}
+            echo "validation-result=success" >> $GITHUB_OUTPUT
           else
-            aws cloudwatch put-metric-data --namespace 'ADOT/GitHubActions' \
-            --metric-name Failure \
-            --dimensions repository=${{ github.repository }},branch=${{ github.ref_name }},workflow=${{ env.CALLER_WORKFLOW_NAME }} \
-            --value 1.0 \
-            --region ${{ env.E2E_TEST_AWS_REGION }}
+            echo "validation-result=failure" >> $GITHUB_OUTPUT
           fi
 
       # Clean up Procedures
@@ -243,3 +250,14 @@ jobs:
         run: |
           terraform destroy -auto-approve \
             -var="test_id=${{ env.TESTING_ID }}"
+
+  emit-metric:
+    needs: python-k8s
+    if: always()
+    uses: ./.github/workflows/e2e-test-publish-result.yml
+    secrets: inherit
+    with:
+      aws-region: ${{ inputs.aws-region }}
+      caller-workflow-name: ${{ inputs.caller-workflow-name }}
+      validation-result: ${{ needs.python-k8s.outputs.validation-result }}
+
