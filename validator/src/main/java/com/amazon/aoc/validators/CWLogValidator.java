@@ -133,11 +133,11 @@ public class CWLogValidator implements IValidator {
     // will not. A service call will have
     // null remoteService and null remoteOperation and the filter expression must be adjusted
     // accordingly.
-//    if (remoteService == null && remoteOperation == null) {
+    if (remoteService == null && remoteOperation == null) {
       dependencyFilter = "&& ($.RemoteService NOT EXISTS) && ($.RemoteOperation NOT EXISTS)";
-//    } else {
-//      dependencyFilter = String.format("&& ($.RemoteService = \"%s\") && ($.RemoteOperation = \"%s\")", remoteService, remoteOperation);
-//    }
+    } else {
+      dependencyFilter = String.format("&& ($.RemoteService = \"%s\") && ($.RemoteOperation = \"%s\")", remoteService, remoteOperation);
+    }
 
     String filterPattern = String.format("{ ($.Service = %s) && ($.Operation = \"%s\") %s }", context.getServiceName(), operation, dependencyFilter);
     log.info("Filter Pattern for Log Search: " + filterPattern);
