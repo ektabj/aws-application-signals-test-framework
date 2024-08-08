@@ -133,9 +133,9 @@ public class CWLogValidator implements IValidator {
     // will not. A service call will have
     // null remoteService and null remoteOperation and the filter expression must be adjusted
     // accordingly.
-    if (remoteService == null && remoteOperation == null) {
+//    if (remoteService == null && remoteOperation == null) {
       dependencyFilter = "&& ($.RemoteService NOT EXISTS) && ($.RemoteOperation NOT EXISTS)";
-    } //else {
+//    } else {
 //      dependencyFilter = String.format("&& ($.RemoteService = \"%s\") && ($.RemoteOperation = \"%s\")", remoteService, remoteOperation);
 //    }
 
