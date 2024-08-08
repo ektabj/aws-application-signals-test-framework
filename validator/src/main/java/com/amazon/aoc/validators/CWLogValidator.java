@@ -135,7 +135,7 @@ public class CWLogValidator implements IValidator {
     // accordingly.
     if (remoteService == null && remoteOperation == null) {
       dependencyFilter = "&& ($.RemoteService NOT EXISTS) && ($.RemoteOperation NOT EXISTS)";
-//    } else {
+    } //else {
 //      dependencyFilter = String.format("&& ($.RemoteService = \"%s\") && ($.RemoteOperation = \"%s\")", remoteService, remoteOperation);
 //    }
 
