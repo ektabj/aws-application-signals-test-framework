@@ -141,7 +141,6 @@ public class CWLogValidator implements IValidator {
 
     String filterPattern = String.format("{ ($.Service = %s) && ($.Operation = \"%s\") %s }", context.getServiceName(), operation, dependencyFilter);
     log.info("Filter Pattern for Log Search: " + filterPattern);
-    Thread.sleep(20000);
 
     List<FilteredLogEvent> retrievedLogs =
       this.cloudWatchService.filterLogs(
