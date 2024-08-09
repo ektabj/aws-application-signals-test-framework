@@ -24,7 +24,7 @@
   expectedLogStructureTemplate: "PYTHON_EKS_CLIENT_CALL_LOG"
 -
   validationType: "cw-log"
-  httpPath: "/mysql"
+  httpPath: "mysql"
   httpMethod: "get"
   callingType: "http"
   expectedLogStructureTemplate: "PYTHON_EKS_RDS_MYSQL_LOG"
