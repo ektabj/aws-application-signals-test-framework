@@ -140,6 +140,23 @@ resource "aws_launch_configuration" "launch_configuration" {
 
     # The application needs time to come up and reach a steady state, this should not take longer than 30 seconds
     sleep 30
+
+    # Deploy Traffic Generator
+    sudo yum install nodejs aws-cli unzip tmux -y
+
+    # Bring in the traffic generator files to EC2 Instance
+    aws s3 cp s3://aws-appsignals-sample-app-prod-${var.aws_region}/traffic-generator.zip ./traffic-generator.zip
+    unzip ./traffic-generator.zip -d ./
+
+    # Install the traffic generator dependencies
+    npm install
+
+    tmux new -s traffic-generator -d
+    tmux send-keys -t traffic-generator "export MAIN_ENDPOINT=\"localhost:8000\"" C-m
+    tmux send-keys -t traffic-generator "export REMOTE_ENDPOINT=\"${aws_instance.remote_service_instance.private_ip}\"" C-m
+    tmux send-keys -t traffic-generator "export ID=\"${var.test_id}\"" C-m
+    tmux send-keys -t traffic-generator "npm start" C-m
+
     EOF
 }
 
@@ -149,6 +166,7 @@ resource "aws_autoscaling_group" "asg" {
   max_size = 1
   launch_configuration = aws_launch_configuration.launch_configuration.name
   vpc_zone_identifier = [data.aws_subnets.default_subnets.ids.0]
+  health_check_type = "EC2"
 }
 
 resource "aws_instance" "remote_service_instance" {
@@ -223,6 +241,21 @@ resource "null_resource" "remote_service_setup" {
 
       # The application needs time to come up and reach a steady state, this should not take longer than 30 seconds
       sleep 30
+
+      # Check if the application is up. If it is not up, then exit 1.
+      attempt_counter=0
+      max_attempts=30
+      until $(curl --output /dev/null --silent --head --fail --max-time 5 $(echo "http://localhost:8001/healthcheck" | tr -d '"')); do
+        if [ $attempt_counter -eq $max_attempts ];then
+          echo "Failed to connect to endpoint."
+          exit 1
+        fi
+        echo "Attempting to connect to the remote endpoint. Tried $attempt_counter out of $max_attempts"
+        attempt_counter=$(($attempt_counter+1))
+        sleep 10
+      done
+
+      echo "Successfully connected to remote endpoint"
 
       EOF
     ]
